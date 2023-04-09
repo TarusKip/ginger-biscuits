@@ -12,16 +12,14 @@ def extract(ti):
     
 def transform(ti):
     word_count = 0
-    extract_val = ti.xcom_pull(key='extract_val', task_ids=['extract_opr'])
+    extract_val = ti.xcom_pull(key='extract_val')
     print("ALL DATA IN TRANSFORM FUNC:",extract_val)
-    for x in extract_val:
-        print("X in LOOP:",x)
-        word_count += 1
-        print("WORD COUNT IN LOOP:", word_count)
+    word_count = len(extract_val.split())
+    print("WORD COUNT IN TRANSFORM FUNC:",word_count,"words")
     ti.xcom_push(key='transform_val', value=word_count)
 
 def load(ti):
-    word_int = ti.xcom_pull(key='transform_val', task_ids=['transform_opr'])
+    word_int = ti.xcom_pull(key='transform_val')
     word_int = str(word_int)
     print("WORD INT IN LOAD FUNC:", word_int)
     with open('/path/to/file/etl_text.txt', 'a+') as f:
@@ -36,6 +34,7 @@ with DAG (
     default_args=default_args,
     schedule = '*/10 * * * *',
     start_date= dt.datetime(2023, 3, 29, 7 , 20, 00, tzinfo=tz)
+    catchup=False
     ) as dag:
     extract_opr = PythonOperator(
         task_id = "extract",
